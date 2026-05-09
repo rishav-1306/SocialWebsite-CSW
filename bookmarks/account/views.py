@@ -13,7 +13,7 @@ def user_login(request):
             user = authenticate(username=cd['username'], password=cd['password'])
             if user:
                 login(request, user)
-                return redirect('dashboard')
+                return redirect('account:dashboard')
     else:
         form = LoginForm()
     return render(request, 'account/login.html', {'form': form})
@@ -56,10 +56,13 @@ def register(request):
 
 @login_required
 def edit(request):
+    # Get or create user profile if it doesn't exist
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    
     if request.method == 'POST':
         user_form = UserEditForm(instance=request.user, data=request.POST)
         profile_form = ProfileEditForm(
-            instance=request.user.profile,
+            instance=profile,
             data=request.POST,
             files=request.FILES
         )
@@ -68,7 +71,7 @@ def edit(request):
             profile_form.save()
     else:
         user_form = UserEditForm(instance=request.user)
-        profile_form = ProfileEditForm(instance=request.user.profile)
+        profile_form = ProfileEditForm(instance=profile)
     return render(
         request,
         'account/edit.html',
